@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
+import { AuthChip } from "@/components/AuthChip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,6 +58,9 @@ function SearchPage() {
   return (
     <main className="min-h-screen px-4 pt-14 pb-24 sm:pt-20">
       <div className="mx-auto max-w-6xl">
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <AuthChip />
+        </div>
         <header className="flex flex-col items-center text-center">
           <h1 className="wordmark text-6xl sm:text-7xl leading-none">
             Oberture
