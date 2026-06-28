@@ -1,57 +1,39 @@
-## Phase 3A — Add a title to the library
+## What I found
 
-Tap any search result card → open a modal showing the title's detail and three status buttons that write to Supabase. No new tables, no policy changes, no library screen.
+The Watchmode secret **is present** (`WATCHMODE_API_KEY` exists), so this is not simply “missing key.” The current app intentionally hides provider errors and returns `{ status: "error" }`, which is why the UI only shows **“Availability unavailable.”**
 
-### What the user sees
+The likely causes are:
 
-- Click a `PosterCard` in the search grid → modal opens.
-- Modal contents:
-  - Large poster (or a styled fallback if no poster).
-  - Title + year, Film/TV badge (matches existing `MediaBadge`).
-  - Overview / synopsis paragraph (TMDB).
-  - Three status buttons: **Watched**, **Watching**, **Want to Watch**.
-- If signed-out: the three buttons are replaced by a small "Sign in to track" link to `/auth`.
-- If the user already has an entry for this title: that status's button is rendered as "active" (filled neon accent), the other two as muted outlines. Tapping a different button switches the status.
-- Tapping a status button:
-  - Button enters a "saving…" state.
-  - On success: brief checkmark / neon-flicker confirmation, then the tapped button stays highlighted as the new active status.
-  - On error: inline error line under the buttons, buttons re-enabled.
-- Modal stays open. Closing is via the existing dialog X / overlay click / Esc.
+1. **Published server function mismatch**: production logs still show an older-style server-function route failing with `Server function info not found`, which means some clients/deploy cache may still be calling the stale Watchmode handler.
+2. **Watchmode API request failure**: the current function returns `error` whenever Watchmode responds non-2xx, but it does not log the upstream status/body, so we can’t tell whether it is an invalid key, quota/rate limit, plan restriction, endpoint mismatch, or lookup failure.
+3. **Query serialization / server-function URL differences**: recent preview traffic shows the Watchmode server function is registered, but it still returns `status: "error"`, pointing to an upstream Watchmode problem rather than only deployment.
 
-### Data flow
+## Plan
 
-1. Extend the TMDB search server fn so each result already carries the fields we need to seed a `titles` row (no extra TMDB round-trip).
-2. On modal open, look up whether the current user already has an entry for this `tmdb_id` and prefill the active status.
-3. On button tap, a single server fn `upsertEntry({ tmdb, status })`:
-   - Upserts the `titles` row by `tmdb_id` (insert if missing, otherwise reuse `id`).
-   - Upserts the `entries` row by `(user_id, title_id)` with the chosen status.
-   - Returns `{ titleId, status }`.
+1. **Add safe server-side diagnostics**
+   - Update `src/lib/watchmode.functions.ts` to log non-sensitive Watchmode failure details: request step (`search` or `sources`), HTTP status, TMDB id, media type, and region.
+   - Do not log the API key or full URL.
 
-Existing RLS already allows authenticated users to insert/update `titles` and manage their own `entries`, so no policy changes.
+2. **Make Watchmode failure states more precise**
+   - Distinguish:
+     - missing key
+     - unauthorized/invalid key
+     - quota/rate limit
+     - title not found
+     - upstream API unavailable
+   - Keep the UI simple, but avoid treating all cases as the same generic error internally.
 
-### Technical details
+3. **Harden the Watchmode lookup**
+   - Check whether the Watchmode `types` parameter is causing misses or errors for TV titles.
+   - If needed, perform TMDB-id lookup without over-filtering, then pick the best matching result by `type`.
 
-**Server functions** (`src/lib/library.functions.ts`, client-safe path):
+4. **Improve the UI fallback copy slightly**
+   - Keep the Y2K look and layout unchanged.
+   - Show “Availability unavailable” for true upstream/key failures and “Not currently available in US” for successful empty results.
 
-- `searchTmdb` (edit existing `src/lib/tmdb.functions.ts`): add `overview`, `backdropUrl`, `releaseDate` (full YYYY-MM-DD or null), `genreIds` to each result. `TmdbResult` type updated; existing search UI consumes the same fields it already does.
-- `getEntryForTmdb({ tmdbId })` — `requireSupabaseAuth`. Joins `titles` by `tmdb_id`, then `entries` by `user_id = context.userId`. Returns `{ status } | null`. Uses `.maybeSingle()`.
-- `upsertEntry({ tmdb, status })` — `requireSupabaseAuth`.
-  - Validates `status ∈ {watched, watching, want_to_watch}` and `tmdb.type ∈ {movie, tv}` with zod.
-  - `supabase.from('titles').upsert({ tmdb_id, type, title, overview, poster_url, backdrop_url, release_date, cached_at: now() }, { onConflict: 'tmdb_id' }).select('id').single()`.
-  - `supabase.from('entries').upsert({ user_id: context.userId, title_id, status, updated_at: now() }, { onConflict: 'user_id,title_id' }).select('status').single()`.
-  - Sets `watched_at = now()` only when status transitions to `watched` and was not previously watched (read existing row first to decide).
+5. **Verify against known titles**
+   - Test a popular movie and TV show expected to have US providers.
+   - Check server logs after the function runs to confirm whether Watchmode says invalid key, quota, or another API error.
 
-**UI**:
-
-- New `src/components/TitleDetailModal.tsx` built on existing `Dialog` primitive, restyled to fit the Y2K cyber palette (neon borders, mono headings, scanline veneer consistent with current `styles.css`). Props: `item: TmdbResult | null`, `open`, `onOpenChange`.
-- Inside the modal, use TanStack Query:
-  - `useQuery(['entry', tmdb_id], getEntryForTmdb)` — gated on session.
-  - `useMutation(upsertEntry)` → on success, set query data + show 1.2s "saved" pulse on the tapped button.
-- `src/routes/index.tsx`: wrap each `PosterCard` in a `<button>` that sets `selected` state; render `<TitleDetailModal item={selected} open={!!selected} onOpenChange={…} />` once at the page root. No routing change, no other screens touched.
-- Auth state inside the modal reuses the same `supabase.auth.getSession()` pattern as `AuthChip`.
-
-### Out of scope (deferred to 3B)
-
-- Rating, review, mood tags, liked, spoilers, watched_at editing UI.
-- Library screen, removing an entry, navigation to a dedicated title page.
-- Genre name resolution (column left null for now; can be backfilled in 3B).
+6. **Republish after the fix**
+   - Once diagnostics/fix are in place and verified in preview, publish the app again so production gets the updated Watchmode function.
