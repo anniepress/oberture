@@ -29,28 +29,28 @@ export function HeaderNav() {
 
   if (!authed) return null;
 
-  const items: NavItem[] = [
-    { to: "/", label: "Search", dot: "var(--cyber-cyan)" },
-    { to: "/library", label: "Library", dot: "var(--cyber-lime)" },
-    { to: "/feed", label: "Feed", dot: "var(--cyber-magenta)" },
-    {
-      to: me?.username ? `/profile/${me.username}` : "/profile",
-      label: "Profile",
-      dot: "var(--cyber-cyan)",
-    },
+  const profileTo = me?.username
+    ? { to: "/profile/$username" as const, params: { username: me.username } }
+    : { to: "/profile" as const };
+
+  const items = [
+    { to: "/" as const, label: "Search", dot: "var(--cyber-cyan)", match: "/" },
+    { to: "/library" as const, label: "Library", dot: "var(--cyber-lime)", match: "/library" },
+    { to: "/feed" as const, label: "Feed", dot: "var(--cyber-magenta)", match: "/feed" },
+    { ...profileTo, label: "Profile", dot: "var(--cyber-cyan)", match: "/profile" },
   ];
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {items.map((it) => {
         const isActive =
-          it.to === "/"
+          it.match === "/"
             ? pathname === "/"
-            : pathname === it.to || pathname.startsWith(it.to + "/");
+            : pathname === it.match || pathname.startsWith(it.match + "/");
         return (
           <Link
             key={it.label}
-            to={it.to}
+            {...(it as any)}
             className="inline-flex items-center gap-2 rounded-sm border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] backdrop-blur transition-colors"
             style={{
               borderColor: isActive
@@ -73,3 +73,4 @@ export function HeaderNav() {
     </div>
   );
 }
+
