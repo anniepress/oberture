@@ -380,7 +380,10 @@ function RatingRow({
         <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[color:var(--cyber-magenta)]">
           {err}
         </p>
-      )}
+    </div>
+  );
+}
+
 
 function labelFor(s: EntryStatus): string {
   return STATUS_OPTIONS.find((o) => o.value === s)?.label ?? s;
