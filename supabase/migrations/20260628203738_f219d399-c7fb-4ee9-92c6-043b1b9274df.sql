@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "follows are viewable by authenticated users" ON public.follows;
+CREATE POLICY "users can view their own follow relationships" ON public.follows FOR SELECT TO authenticated USING (auth.uid() = follower_id OR auth.uid() = following_id);
