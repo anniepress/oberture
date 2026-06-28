@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
 import { AuthChip } from "@/components/AuthChip";
+import { TitleDetailModal } from "@/components/TitleDetailModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +24,7 @@ function SearchPage() {
   const [debounced, setDebounced] = useState("");
   const [results, setResults] = useState<TmdbResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<TmdbResult | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -77,11 +79,20 @@ function SearchPage() {
 
         <section className="mt-14">
           {loading && <LoadingGrid />}
-          {!loading && results.length > 0 && <ResultsGrid results={results} />}
+          {!loading && results.length > 0 && (
+            <ResultsGrid results={results} onSelect={setSelected} />
+          )}
           {showEmpty && <EmptyState query={debounced} />}
           {!hasQuery && !loading && <IdleState />}
         </section>
       </div>
+      <TitleDetailModal
+        item={selected}
+        open={selected !== null}
+        onOpenChange={(o) => {
+          if (!o) setSelected(null);
+        }}
+      />
     </main>
   );
 }
@@ -146,19 +157,40 @@ function SearchIcon() {
   );
 }
 
-function ResultsGrid({ results }: { results: TmdbResult[] }) {
+function ResultsGrid({
+  results,
+  onSelect,
+}: {
+  results: TmdbResult[];
+  onSelect: (item: TmdbResult) => void;
+}) {
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {results.map((r) => (
-        <PosterCard key={`${r.mediaType}-${r.id}`} item={r} />
+        <PosterCard
+          key={`${r.mediaType}-${r.id}`}
+          item={r}
+          onSelect={onSelect}
+        />
       ))}
     </div>
   );
 }
 
-function PosterCard({ item }: { item: TmdbResult }) {
+function PosterCard({
+  item,
+  onSelect,
+}: {
+  item: TmdbResult;
+  onSelect: (item: TmdbResult) => void;
+}) {
   return (
-    <article className="poster-card group">
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className="poster-card group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--cyber-cyan)]"
+      aria-label={`Open ${item.title}`}
+    >
       <div className="relative aspect-[2/3] w-full">
         {item.posterUrl ? (
           <img
@@ -189,7 +221,7 @@ function PosterCard({ item }: { item: TmdbResult }) {
           {item.year ?? "—"}
         </p>
       </div>
-    </article>
+    </button>
   );
 }
 
