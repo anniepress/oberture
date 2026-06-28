@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { AuthChip } from "@/components/AuthChip";
 import { HeaderNav } from "@/components/HeaderNav";
 import { TitleDetailModal } from "@/components/TitleDetailModal";
