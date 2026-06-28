@@ -11,7 +11,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { getEntryForTmdb, upsertEntry, setRating, type EntryStatus } from "@/lib/library.functions";
+import { getWatchSources, type WatchSource } from "@/lib/watchmode.functions";
 import type { TmdbResult } from "@/lib/tmdb.functions";
+
 
 const STATUS_OPTIONS: { value: EntryStatus; label: string }[] = [
   { value: "watched", label: "Watched" },
