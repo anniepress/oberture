@@ -5,6 +5,10 @@ export type TmdbResult = {
   title: string;
   year: string | null;
   posterUrl: string | null;
+  backdropUrl: string | null;
+  releaseDate: string | null;
+  overview: string;
+  genreIds: number[];
   mediaType: "movie" | "tv";
 };
 
@@ -33,6 +37,9 @@ export const searchTmdb = createServerFn({ method: "GET" })
         release_date?: string;
         first_air_date?: string;
         poster_path?: string | null;
+        backdrop_path?: string | null;
+        overview?: string;
+        genre_ids?: number[];
       }>;
     };
 
@@ -45,9 +52,15 @@ export const searchTmdb = createServerFn({ method: "GET" })
           id: r.id,
           title: (isMovie ? r.title : r.name) ?? "Untitled",
           year: date ? date.slice(0, 4) : null,
+          releaseDate: date && date.length >= 10 ? date : null,
           posterUrl: r.poster_path
             ? `https://image.tmdb.org/t/p/w500${r.poster_path}`
             : null,
+          backdropUrl: r.backdrop_path
+            ? `https://image.tmdb.org/t/p/w780${r.backdrop_path}`
+            : null,
+          overview: r.overview ?? "",
+          genreIds: r.genre_ids ?? [],
           mediaType: isMovie ? "movie" : "tv",
         };
       });
