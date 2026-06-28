@@ -460,7 +460,7 @@ function WhereToWatch({ item }: { item: TmdbResult }) {
           </div>
         ) : isError || data?.status === "error" ? (
           <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-            ⚠ Availability unavailable
+            ⚠ {data?.errorCode === "auth" ? "Availability key rejected" : "Availability unavailable"}
           </p>
         ) : data?.status === "not_found" || (sub.length + rent.length + buy.length === 0) ? (
           <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
