@@ -15,12 +15,14 @@ const tmdbSchema = z.object({
   releaseDate: z.string().nullable().optional(),
 });
 
+export type EntryView = { status: EntryStatus; rating: number | null };
+
 export const getEntryForTmdb = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tmdbId: number }) =>
     z.object({ tmdbId: z.number().int() }).parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ status: EntryStatus } | null> => {
+  .handler(async ({ data, context }): Promise<EntryView | null> => {
     const { supabase, userId } = context;
 
     const { data: title } = await supabase
@@ -33,13 +35,104 @@ export const getEntryForTmdb = createServerFn({ method: "GET" })
 
     const { data: entry } = await supabase
       .from("entries")
-      .select("status")
+      .select("status, rating")
       .eq("user_id", userId)
       .eq("title_id", title.id)
       .maybeSingle();
 
     if (!entry) return null;
-    return { status: entry.status as EntryStatus };
+    return {
+      status: entry.status as EntryStatus,
+      rating: (entry.rating as number | null) ?? null,
+    };
+  });
+
+export type LibraryEntry = {
+  id: string;
+  status: EntryStatus;
+  rating: number | null;
+  updatedAt: string | null;
+  title: {
+    id: string;
+    tmdbId: number;
+    type: "movie" | "tv";
+    title: string;
+    posterUrl: string | null;
+    backdropUrl: string | null;
+    overview: string | null;
+    releaseDate: string | null;
+    year: number | null;
+  };
+};
+
+export const listLibrary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<LibraryEntry[]> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("entries")
+      .select(
+        "id, status, rating, updated_at, titles!inner(id, tmdb_id, type, title, poster_url, backdrop_url, overview, release_date)",
+      )
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map((row: any) => {
+      const t = row.titles;
+      const year = t?.release_date
+        ? Number(String(t.release_date).slice(0, 4)) || null
+        : null;
+      return {
+        id: row.id as string,
+        status: row.status as EntryStatus,
+        rating: (row.rating as number | null) ?? null,
+        updatedAt: row.updated_at as string | null,
+        title: {
+          id: t.id,
+          tmdbId: t.tmdb_id,
+          type: t.type,
+          title: t.title,
+          posterUrl: t.poster_url,
+          backdropUrl: t.backdrop_url,
+          overview: t.overview,
+          releaseDate: t.release_date,
+          year,
+        },
+      };
+    });
+  });
+
+export const setRating = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tmdbId: number; rating: number | null }) =>
+    z
+      .object({
+        tmdbId: z.number().int(),
+        rating: z.number().int().min(1).max(10).nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ rating: number | null }> => {
+    const { supabase, userId } = context;
+
+    const { data: title, error: tErr } = await supabase
+      .from("titles")
+      .select("id")
+      .eq("tmdb_id", data.tmdbId)
+      .maybeSingle();
+    if (tErr) throw new Error(tErr.message);
+    if (!title) throw new Error("Add to library before rating");
+
+    const { error } = await supabase
+      .from("entries")
+      .update({ rating: data.rating, updated_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("title_id", title.id);
+
+    if (error) throw new Error(error.message);
+    return { rating: data.rating };
   });
 
 export const upsertEntry = createServerFn({ method: "POST" })
