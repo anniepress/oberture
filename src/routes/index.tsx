@@ -30,6 +30,19 @@ function SearchPage() {
   const reqId = useRef(0);
 
   useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setQuery("");
+        setDebounced("");
+        setResults([]);
+        setLoading(false);
+        setSelected(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 300);
     return () => clearTimeout(t);
   }, [query]);
