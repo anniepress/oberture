@@ -394,3 +394,155 @@ function RatingRow({
 function labelFor(s: EntryStatus): string {
   return STATUS_OPTIONS.find((o) => o.value === s)?.label ?? s;
 }
+
+function WhereToWatch({ item }: { item: TmdbResult }) {
+  const fetchSources = useServerFn(getWatchSources);
+  const [region, setRegion] = useState<string>("US");
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(async ({ data }) => {
+      const uid = data.session?.user?.id;
+      if (!uid) return;
+      const { data: row } = await supabase
+        .from("users")
+        .select("region")
+        .eq("id", uid)
+        .maybeSingle();
+      if (active && row?.region) setRegion(row.region);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["watchmode", item.id, item.mediaType, region],
+    queryFn: () =>
+      fetchSources({
+        data: { tmdbId: item.id, mediaType: item.mediaType, region },
+      }),
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+  });
+
+  const sub = (data?.sources ?? []).filter((s) => s.type === "sub");
+  const rent = (data?.sources ?? []).filter((s) => s.type === "rent");
+  const buy = (data?.sources ?? []).filter((s) => s.type === "buy");
+
+  return (
+    <div className="mt-6">
+      <div className="chrome-divider w-full" />
+      <div className="mt-5 flex items-center justify-between">
+        <h3
+          className="font-mono text-[11px] uppercase tracking-[0.32em] text-foreground"
+          style={{
+            textShadow:
+              "1px 0 0 color-mix(in oklab, var(--cyber-magenta) 50%, transparent), -1px 0 0 color-mix(in oklab, var(--cyber-cyan) 50%, transparent)",
+          }}
+        >
+          ▌ Where to Watch
+        </h3>
+        <span className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+          region · {region}
+        </span>
+      </div>
+
+      <div className="mt-4">
+        {isLoading ? (
+          <div className="flex gap-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-8 w-28 animate-pulse rounded-sm bg-[oklch(0.2_0.03_285)]"
+              />
+            ))}
+          </div>
+        ) : isError || data?.status === "error" ? (
+          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+            ⚠ Availability unavailable
+          </p>
+        ) : data?.status === "not_found" || (sub.length + rent.length + buy.length === 0) ? (
+          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+            ░ Not currently available in {region}
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <SourceGroup label="Streaming" sources={sub} accent="var(--cyber-lime)" />
+            <SourceGroup label="Rent" sources={rent} accent="var(--cyber-cyan)" />
+            <SourceGroup label="Buy" sources={buy} accent="var(--cyber-magenta)" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SourceGroup({
+  label,
+  sources,
+  accent,
+}: {
+  label: string;
+  sources: WatchSource[];
+  accent: string;
+}) {
+  if (sources.length === 0) return null;
+  // Dedupe by name for chip display (HD/SD variants of same provider).
+  const seen = new Set<string>();
+  const unique = sources.filter((s) => {
+    const k = s.name.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return (
+    <div>
+      <p
+        className="mb-2 text-[10px] font-semibold uppercase tracking-[0.32em]"
+        style={{ color: accent }}
+      >
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {unique.map((s) => {
+          const inner = (
+            <>
+              <span className="truncate">{s.name}</span>
+              <span aria-hidden className="text-[10px] opacity-70">↗</span>
+            </>
+          );
+          const className =
+            "inline-flex max-w-[180px] items-center gap-1.5 rounded-sm border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.18em] transition-all";
+          const style = {
+            borderColor: `color-mix(in oklab, ${accent} 45%, var(--border))`,
+            background: `color-mix(in oklab, ${accent} 10%, transparent)`,
+            color: "var(--foreground)",
+            boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${accent} 25%, transparent)`,
+          } as const;
+          return s.webUrl ? (
+            <a
+              key={`${s.id}-${s.format ?? ""}`}
+              href={s.webUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={className + " hover:-translate-y-0.5"}
+              style={style}
+            >
+              {inner}
+            </a>
+          ) : (
+            <span
+              key={`${s.id}-${s.format ?? ""}`}
+              className={className + " opacity-70"}
+              style={style}
+            >
+              {inner}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
