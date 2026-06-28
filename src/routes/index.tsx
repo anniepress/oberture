@@ -157,19 +157,40 @@ function SearchIcon() {
   );
 }
 
-function ResultsGrid({ results }: { results: TmdbResult[] }) {
+function ResultsGrid({
+  results,
+  onSelect,
+}: {
+  results: TmdbResult[];
+  onSelect: (item: TmdbResult) => void;
+}) {
   return (
     <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {results.map((r) => (
-        <PosterCard key={`${r.mediaType}-${r.id}`} item={r} />
+        <PosterCard
+          key={`${r.mediaType}-${r.id}`}
+          item={r}
+          onSelect={onSelect}
+        />
       ))}
     </div>
   );
 }
 
-function PosterCard({ item }: { item: TmdbResult }) {
+function PosterCard({
+  item,
+  onSelect,
+}: {
+  item: TmdbResult;
+  onSelect: (item: TmdbResult) => void;
+}) {
   return (
-    <article className="poster-card group">
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className="poster-card group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--cyber-cyan)]"
+      aria-label={`Open ${item.title}`}
+    >
       <div className="relative aspect-[2/3] w-full">
         {item.posterUrl ? (
           <img
@@ -200,7 +221,7 @@ function PosterCard({ item }: { item: TmdbResult }) {
           {item.year ?? "—"}
         </p>
       </div>
-    </article>
+    </button>
   );
 }
 
