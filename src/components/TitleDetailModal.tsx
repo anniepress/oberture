@@ -218,7 +218,10 @@ function StatusButtons({ item }: { item: TmdbResult }) {
       }),
     onMutate: () => setErrorMsg(null),
     onSuccess: (res) => {
-      qc.setQueryData(queryKey, { status: res.status });
+      qc.setQueryData(queryKey, (prev: any) => ({
+        status: res.status,
+        rating: prev?.rating ?? null,
+      }));
       setJustSaved(res.status);
       window.setTimeout(() => {
         setJustSaved((s) => (s === res.status ? null : s));
