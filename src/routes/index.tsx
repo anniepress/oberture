@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
 import { AuthChip } from "@/components/AuthChip";
+import { TitleDetailModal } from "@/components/TitleDetailModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
