@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
 import { AuthChip } from "@/components/AuthChip";
-import { LibraryNavLink } from "@/components/LibraryNavLink";
+import { HeaderNav } from "@/components/HeaderNav";
 import { TitleDetailModal } from "@/components/TitleDetailModal";
 
 export const Route = createFileRoute("/")({
@@ -62,7 +62,7 @@ function SearchPage() {
     <main className="min-h-screen px-4 pt-14 pb-24 sm:pt-20">
       <div className="mx-auto max-w-6xl">
         <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
-          <LibraryNavLink />
+          <HeaderNav />
           <AuthChip />
         </div>
         <header className="flex flex-col items-center text-center">
