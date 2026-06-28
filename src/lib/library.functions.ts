@@ -104,6 +104,39 @@ export const listLibrary = createServerFn({ method: "GET" })
     });
   });
 
+async function logActivity(
+  supabase: any,
+  args: {
+    actorId: string;
+    activityType: "logged" | "rated" | "added_to_watchlist";
+    titleId: string;
+    entryId?: string | null;
+    metadata?: { rating?: number } | null;
+  },
+) {
+  // Dedupe: skip if same actor + entry + type already exists within the last hour.
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const q = supabase
+    .from("activity_feed")
+    .select("id")
+    .eq("actor_id", args.actorId)
+    .eq("activity_type", args.activityType)
+    .eq("title_id", args.titleId)
+    .gte("created_at", cutoff)
+    .limit(1);
+  const { data: existing } = args.entryId
+    ? await q.eq("entry_id", args.entryId)
+    : await q;
+  if (existing && existing.length > 0) return;
+  await supabase.from("activity_feed").insert({
+    actor_id: args.actorId,
+    activity_type: args.activityType,
+    title_id: args.titleId,
+    entry_id: args.entryId ?? null,
+    metadata: (args.metadata ?? null) as any,
+  });
+}
+
 export const setRating = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tmdbId: number; rating: number | null }) =>
@@ -125,13 +158,25 @@ export const setRating = createServerFn({ method: "POST" })
     if (tErr) throw new Error(tErr.message);
     if (!title) throw new Error("Add to library before rating");
 
-    const { error } = await supabase
+    const { data: entryRow, error } = await supabase
       .from("entries")
       .update({ rating: data.rating, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
-      .eq("title_id", title.id);
+      .eq("title_id", title.id)
+      .select("id")
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+
+    if (data.rating != null) {
+      await logActivity(supabase, {
+        actorId: userId,
+        activityType: "rated",
+        titleId: title.id,
+        entryId: entryRow?.id ?? null,
+        metadata: { rating: data.rating },
+      });
+    }
     return { rating: data.rating };
   });
 
@@ -173,10 +218,9 @@ export const upsertEntry = createServerFn({ method: "POST" })
       throw new Error(titleErr?.message ?? "Failed to save title");
     }
 
-    // Read existing entry so we only set watched_at on first transition to watched.
     const { data: existing } = await supabase
       .from("entries")
-      .select("status, watched_at")
+      .select("id, status, watched_at")
       .eq("user_id", userId)
       .eq("title_id", titleRow.id)
       .maybeSingle();
@@ -184,18 +228,42 @@ export const upsertEntry = createServerFn({ method: "POST" })
     const shouldStampWatched =
       status === "watched" && (!existing || existing.status !== "watched");
 
-    const { error: entryErr } = await supabase.from("entries").upsert(
-      {
-        user_id: userId,
-        title_id: titleRow.id,
-        status,
-        updated_at: nowIso,
-        ...(shouldStampWatched ? { watched_at: nowIso } : {}),
-      },
-      { onConflict: "user_id,title_id" },
-    );
+    const { data: upserted, error: entryErr } = await supabase
+      .from("entries")
+      .upsert(
+        {
+          user_id: userId,
+          title_id: titleRow.id,
+          status,
+          updated_at: nowIso,
+          ...(shouldStampWatched ? { watched_at: nowIso } : {}),
+        },
+        { onConflict: "user_id,title_id" },
+      )
+      .select("id")
+      .maybeSingle();
 
     if (entryErr) throw new Error(entryErr.message);
+    const entryId = upserted?.id ?? existing?.id ?? null;
+
+    const statusChanged = !existing || existing.status !== status;
+    if (statusChanged) {
+      if (status === "watched") {
+        await logActivity(supabase, {
+          actorId: userId,
+          activityType: "logged",
+          titleId: titleRow.id,
+          entryId,
+        });
+      } else if (status === "want_to_watch") {
+        await logActivity(supabase, {
+          actorId: userId,
+          activityType: "added_to_watchlist",
+          titleId: titleRow.id,
+          entryId,
+        });
+      }
+    }
 
     return { titleId: titleRow.id, status };
   });
