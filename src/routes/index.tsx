@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
 import { AuthChip } from "@/components/AuthChip";
+import { LibraryNavLink } from "@/components/LibraryNavLink";
 import { TitleDetailModal } from "@/components/TitleDetailModal";
 
 export const Route = createFileRoute("/")({
