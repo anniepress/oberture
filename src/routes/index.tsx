@@ -24,6 +24,7 @@ function SearchPage() {
   const [debounced, setDebounced] = useState("");
   const [results, setResults] = useState<TmdbResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<TmdbResult | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
