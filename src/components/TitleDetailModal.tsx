@@ -181,10 +181,9 @@ function Body({ item }: { item: TmdbResult }) {
             )}
           </div>
 
-          <WhereToWatch item={item} user={user} authReady={authReady} />
+          <WhereToWatch item={item} />
         </div>
 
-        </div>
       </div>
     </div>
   );
