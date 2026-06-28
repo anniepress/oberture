@@ -76,7 +76,10 @@ export const getWatchSources = createServerFn({ method: "GET" })
     try {
       const searchUrl = new URL("https://api.watchmode.com/v1/search/");
       searchUrl.searchParams.set("apiKey", apiKey);
-      searchUrl.searchParams.set("search_field", "tmdb_id");
+      searchUrl.searchParams.set(
+        "search_field",
+        data.mediaType === "movie" ? "tmdb_movie_id" : "tmdb_tv_id",
+      );
       searchUrl.searchParams.set("search_value", String(data.tmdbId));
 
       const searchRes = await fetch(searchUrl);
