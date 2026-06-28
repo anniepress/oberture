@@ -79,11 +79,20 @@ function SearchPage() {
 
         <section className="mt-14">
           {loading && <LoadingGrid />}
-          {!loading && results.length > 0 && <ResultsGrid results={results} />}
+          {!loading && results.length > 0 && (
+            <ResultsGrid results={results} onSelect={setSelected} />
+          )}
           {showEmpty && <EmptyState query={debounced} />}
           {!hasQuery && !loading && <IdleState />}
         </section>
       </div>
+      <TitleDetailModal
+        item={selected}
+        open={selected !== null}
+        onOpenChange={(o) => {
+          if (!o) setSelected(null);
+        }}
+      />
     </main>
   );
 }
