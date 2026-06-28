@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { getEntryForTmdb, upsertEntry, type EntryStatus } from "@/lib/library.functions";
+import { getEntryForTmdb, upsertEntry, setRating, type EntryStatus } from "@/lib/library.functions";
 import type { TmdbResult } from "@/lib/tmdb.functions";
 
 const STATUS_OPTIONS: { value: EntryStatus; label: string }[] = [
@@ -218,7 +218,10 @@ function StatusButtons({ item }: { item: TmdbResult }) {
       }),
     onMutate: () => setErrorMsg(null),
     onSuccess: (res) => {
-      qc.setQueryData(queryKey, { status: res.status });
+      qc.setQueryData(queryKey, (prev: any) => ({
+        status: res.status,
+        rating: prev?.rating ?? null,
+      }));
       setJustSaved(res.status);
       window.setTimeout(() => {
         setJustSaved((s) => (s === res.status ? null : s));
@@ -277,9 +280,111 @@ function StatusButtons({ item }: { item: TmdbResult }) {
           In library · {labelFor(active)}
         </p>
       )}
+      {active === "watched" && (
+        <RatingRow tmdbId={item.id} initial={entry?.rating ?? null} queryKey={queryKey} />
+      )}
     </div>
   );
 }
+
+function RatingRow({
+  tmdbId,
+  initial,
+  queryKey,
+}: {
+  tmdbId: number;
+  initial: number | null;
+  queryKey: readonly unknown[];
+}) {
+  const qc = useQueryClient();
+  const rate = useServerFn(setRating);
+  const [hover, setHover] = useState<number | null>(null);
+  const [value, setValue] = useState<number | null>(initial);
+  const [pending, setPending] = useState<number | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValue(initial);
+  }, [initial]);
+
+  const display = hover ?? value ?? 0;
+
+  async function pick(n: number) {
+    const next = value === n ? null : n; // tap same star to clear
+    setErr(null);
+    setPending(n);
+    const prev = value;
+    setValue(next);
+    try {
+      await rate({ data: { tmdbId, rating: next } });
+      qc.setQueryData(queryKey, (p: any) => ({ ...(p ?? {}), rating: next }));
+    } catch (e) {
+      setValue(prev);
+      setErr(e instanceof Error ? e.message : "Failed to save rating");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return (
+    <div className="mt-5 border-t border-border/40 pt-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+          Your rating {value ? `· ${value}/10` : "· optional"}
+        </p>
+        {value !== null && (
+          <button
+            type="button"
+            onClick={() => pick(value)}
+            className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground hover:text-[color:var(--cyber-magenta)]"
+          >
+            clear
+          </button>
+        )}
+      </div>
+      <div
+        className="mt-2 flex gap-1"
+        onMouseLeave={() => setHover(null)}
+        role="radiogroup"
+        aria-label="Rating from 1 to 10"
+      >
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+          const filled = n <= display;
+          const isPending = pending === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={value === n}
+              aria-label={`${n} out of 10`}
+              disabled={pending !== null}
+              onMouseEnter={() => setHover(n)}
+              onFocus={() => setHover(n)}
+              onClick={() => pick(n)}
+              className="group/star flex h-7 w-7 items-center justify-center rounded-sm font-mono text-sm transition-all disabled:cursor-wait"
+              style={{
+                color: filled ? "var(--cyber-lime)" : "color-mix(in oklab, var(--foreground) 35%, transparent)",
+                textShadow: filled
+                  ? "0 0 8px color-mix(in oklab, var(--cyber-lime) 80%, transparent)"
+                  : "none",
+                transform: isPending ? "scale(0.9)" : "scale(1)",
+              }}
+            >
+              ★
+            </button>
+          );
+        })}
+      </div>
+      {err && (
+        <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[color:var(--cyber-magenta)]">
+          {err}
+        </p>
+      )}
+    </div>
+  );
+}
+
 
 function labelFor(s: EntryStatus): string {
   return STATUS_OPTIONS.find((o) => o.value === s)?.label ?? s;
