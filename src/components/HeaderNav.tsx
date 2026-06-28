@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentUsername } from "@/lib/profile.functions";
 
-type NavItem = { to: string; label: string; dot: string };
+
 
 export function HeaderNav() {
   const [authed, setAuthed] = useState(false);
