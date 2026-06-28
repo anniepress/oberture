@@ -180,6 +180,10 @@ function Body({ item }: { item: TmdbResult }) {
               </div>
             )}
           </div>
+
+          <WhereToWatch item={item} user={user} authReady={authReady} />
+        </div>
+
         </div>
       </div>
     </div>
