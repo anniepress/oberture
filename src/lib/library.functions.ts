@@ -114,20 +114,31 @@ async function logActivity(
     metadata?: { rating?: number } | null;
   },
 ) {
-  // Dedupe: skip if same actor + entry + type already exists within the last hour.
-  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const q = supabase
+  // Dedupe: if same actor + title + type exists within last 24h, bump created_at instead of inserting.
+  const nowIso = new Date().toISOString();
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: existing } = await supabase
     .from("activity_feed")
     .select("id")
     .eq("actor_id", args.actorId)
     .eq("activity_type", args.activityType)
     .eq("title_id", args.titleId)
     .gte("created_at", cutoff)
+    .order("created_at", { ascending: false })
     .limit(1);
-  const { data: existing } = args.entryId
-    ? await q.eq("entry_id", args.entryId)
-    : await q;
-  if (existing && existing.length > 0) return;
+
+  if (existing && existing.length > 0) {
+    await supabase
+      .from("activity_feed")
+      .update({
+        created_at: nowIso,
+        entry_id: args.entryId ?? null,
+        metadata: (args.metadata ?? null) as any,
+      })
+      .eq("id", existing[0].id);
+    return;
+  }
+
   await supabase.from("activity_feed").insert({
     actor_id: args.actorId,
     activity_type: args.activityType,
