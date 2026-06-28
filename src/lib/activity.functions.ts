@@ -5,7 +5,7 @@ export type FeedItem = {
   id: string;
   activityType: "logged" | "rated" | "added_to_watchlist";
   createdAt: string;
-  metadata: Record<string, unknown> | null;
+  metadata: { rating?: number } | null;
   actor: {
     id: string;
     username: string;
