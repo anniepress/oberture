@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchTmdb, type TmdbResult } from "@/lib/tmdb.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { AuthChip } from "@/components/AuthChip";
 import { HeaderNav } from "@/components/HeaderNav";
 import { TitleDetailModal } from "@/components/TitleDetailModal";
@@ -27,6 +28,19 @@ function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<TmdbResult | null>(null);
   const reqId = useRef(0);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setQuery("");
+        setDebounced("");
+        setResults([]);
+        setLoading(false);
+        setSelected(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 300);
