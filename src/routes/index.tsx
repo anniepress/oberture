@@ -60,7 +60,8 @@ function SearchPage() {
   return (
     <main className="min-h-screen px-4 pt-14 pb-24 sm:pt-20">
       <div className="mx-auto max-w-6xl">
-        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
+          <LibraryNavLink />
           <AuthChip />
         </div>
         <header className="flex flex-col items-center text-center">
