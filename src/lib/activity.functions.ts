@@ -38,8 +38,7 @@ export const getFeed = createServerFn({ method: "GET" })
     const ids = (follows ?? []).map((r: any) => r.following_id);
     if (ids.length === 0) return [];
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("activity_feed")
       .select(
         "id, activity_type, created_at, metadata, actor_id, users:users!activity_feed_actor_id_fkey(id, username, display_name, avatar_url), titles:titles(id, tmdb_id, type, title, poster_url, backdrop_url, overview, release_date)",

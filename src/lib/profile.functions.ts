@@ -41,10 +41,9 @@ export const getProfile = createServerFn({ method: "GET" })
     z.object({ username: z.string().min(1).max(120) }).parse(i),
   )
   .handler(async ({ data, context }): Promise<ProfileView | null> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { userId } = context;
+    const { supabase, userId } = context;
 
-    const { data: u, error } = await supabaseAdmin
+    const { data: u, error } = await supabase
       .from("users")
       .select("id, username, display_name, avatar_url, bio, account_type")
       .ilike("username", data.username)
@@ -54,19 +53,19 @@ export const getProfile = createServerFn({ method: "GET" })
 
     const [{ count: followerCount }, { count: followingCount }, follow] =
       await Promise.all([
-        supabaseAdmin
+        supabase
           .from("follows")
           .select("id", { count: "exact", head: true })
           .eq("following_id", u.id)
           .eq("status", "active"),
-        supabaseAdmin
+        supabase
           .from("follows")
           .select("id", { count: "exact", head: true })
           .eq("follower_id", u.id)
           .eq("status", "active"),
         userId === u.id
           ? Promise.resolve({ data: null })
-          : supabaseAdmin
+          : supabase
               .from("follows")
               .select("id")
               .eq("follower_id", userId)
@@ -100,19 +99,18 @@ export const listProfileEntries = createServerFn({ method: "GET" })
     z.object({ userId: z.string().uuid() }).parse(i),
   )
   .handler(async ({ data, context }): Promise<ProfileEntry[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { userId } = context;
+    const { supabase, userId } = context;
 
     // Visibility: self always; otherwise if owner is curator OR viewer follows owner.
     if (userId !== data.userId) {
-      const { data: owner } = await supabaseAdmin
+      const { data: owner } = await supabase
         .from("users")
         .select("account_type")
         .eq("id", data.userId)
         .maybeSingle();
       if (!owner) return [];
       if (owner.account_type !== "curator") {
-        const { data: f } = await supabaseAdmin
+        const { data: f } = await supabase
           .from("follows")
           .select("id")
           .eq("follower_id", userId)
@@ -123,7 +121,7 @@ export const listProfileEntries = createServerFn({ method: "GET" })
       }
     }
 
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await supabase
       .from("entries")
       .select(
         "id, status, rating, updated_at, titles!inner(id, tmdb_id, type, title, poster_url, backdrop_url, overview, release_date)",
@@ -241,12 +239,12 @@ export const searchUsers = createServerFn({ method: "GET" })
   .inputValidator((i: { q: string }) =>
     z.object({ q: z.string().min(1).max(120) }).parse(i),
   )
-  .handler(async ({ data }): Promise<UserSearchResult[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .handler(async ({ data, context }): Promise<UserSearchResult[]> => {
+    const { supabase } = context;
     const q = data.q.trim();
     if (!q) return [];
     const like = `%${q.replace(/[%_]/g, "")}%`;
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await supabase
       .from("users")
       .select("id, username, display_name, avatar_url, account_type")
       .or(`username.ilike.${like},display_name.ilike.${like}`)
