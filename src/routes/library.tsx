@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AuthChip } from "@/components/AuthChip";
-import { LibraryNavLink } from "@/components/LibraryNavLink";
+import { HeaderNav } from "@/components/HeaderNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listLibrary,
@@ -64,7 +64,7 @@ function LibraryPage() {
     <main className="min-h-screen px-4 pt-14 pb-24 sm:pt-20">
       <div className="mx-auto max-w-6xl">
         <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
-          <LibraryNavLink />
+          <HeaderNav />
           <AuthChip />
         </div>
         <header className="flex flex-col items-center text-center">
