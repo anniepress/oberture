@@ -33,9 +33,11 @@ export function TitleDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl border-0 bg-transparent p-0 shadow-none"
+        className="max-w-3xl border-0 bg-transparent p-0 shadow-none max-md:top-4 max-md:flex max-md:max-h-[calc(100dvh-2rem)] max-md:translate-y-0 max-md:flex-col max-md:overflow-hidden max-md:[&>button]:fixed max-md:[&>button]:right-4 max-md:[&>button]:top-4 max-md:[&>button]:z-[60] max-md:[&>button]:rounded-sm max-md:[&>button]:border max-md:[&>button]:border-border max-md:[&>button]:bg-card/95 max-md:[&>button]:p-1.5 max-md:[&>button]:opacity-100 max-md:[&>button]:shadow-md max-md:[&>button]:backdrop-blur"
       >
-        {item && <Body item={item} />}
+        <div className="max-md:min-h-0 max-md:flex-1 max-md:overflow-y-auto max-md:overscroll-contain max-md:pt-2">
+          {item && <Body item={item} />}
+        </div>
       </DialogContent>
     </Dialog>
   );
