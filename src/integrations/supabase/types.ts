@@ -18,28 +18,28 @@ export type Database = {
         Row: {
           activity_type: string
           actor_id: string
-          created_at: string
+          created_at: string | null
           entry_id: string | null
           id: string
-          metadata: Json
+          metadata: Json | null
           title_id: string | null
         }
         Insert: {
           activity_type: string
           actor_id: string
-          created_at?: string
+          created_at?: string | null
           entry_id?: string | null
           id?: string
-          metadata?: Json
+          metadata?: Json | null
           title_id?: string | null
         }
         Update: {
           activity_type?: string
           actor_id?: string
-          created_at?: string
+          created_at?: string | null
           entry_id?: string | null
           id?: string
-          metadata?: Json
+          metadata?: Json | null
           title_id?: string | null
         }
         Relationships: [
@@ -66,11 +66,92 @@ export type Database = {
           },
         ]
       }
+      curator_list_items: {
+        Row: {
+          added_at: string | null
+          id: string
+          list_id: string
+          note: string | null
+          position: number
+          title_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          list_id: string
+          note?: string | null
+          position: number
+          title_id: string
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          list_id?: string
+          note?: string | null
+          position?: number
+          title_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curator_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "curator_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curator_list_items_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "titles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curator_lists: {
+        Row: {
+          created_at: string | null
+          curator_id: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          curator_id: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          curator_id?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curator_lists_curator_id_fkey"
+            columns: ["curator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entries: {
         Row: {
-          created_at: string
+          contains_spoilers: boolean | null
+          created_at: string | null
           id: string
+          liked: boolean | null
+          mood_tags: string[] | null
           rating: number | null
+          review: string | null
           status: string
           title_id: string
           updated_at: string | null
@@ -78,9 +159,13 @@ export type Database = {
           watched_at: string | null
         }
         Insert: {
-          created_at?: string
+          contains_spoilers?: boolean | null
+          created_at?: string | null
           id?: string
+          liked?: boolean | null
+          mood_tags?: string[] | null
           rating?: number | null
+          review?: string | null
           status: string
           title_id: string
           updated_at?: string | null
@@ -88,9 +173,13 @@ export type Database = {
           watched_at?: string | null
         }
         Update: {
-          created_at?: string
+          contains_spoilers?: boolean | null
+          created_at?: string | null
           id?: string
+          liked?: boolean | null
+          mood_tags?: string[] | null
           rating?: number | null
+          review?: string | null
           status?: string
           title_id?: string
           updated_at?: string | null
@@ -116,21 +205,21 @@ export type Database = {
       }
       follows: {
         Row: {
-          created_at: string
+          created_at: string | null
           follower_id: string
           following_id: string
           id: string
           status: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           follower_id: string
           following_id: string
           id?: string
           status?: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           follower_id?: string
           following_id?: string
           id?: string
@@ -153,15 +242,69 @@ export type Database = {
           },
         ]
       }
+      recommendations: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          recipient_id: string
+          sender_id: string
+          status: string
+          title_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          recipient_id: string
+          sender_id: string
+          status?: string
+          title_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          recipient_id?: string
+          sender_id?: string
+          status?: string
+          title_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "titles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       titles: {
         Row: {
           backdrop_url: string | null
           cached_at: string | null
-          created_at: string
+          genres: string[] | null
           id: string
-          overview: string
+          overview: string | null
           poster_url: string | null
           release_date: string | null
+          runtime_mins: number | null
+          status: string | null
           title: string
           tmdb_id: number
           type: string
@@ -169,11 +312,13 @@ export type Database = {
         Insert: {
           backdrop_url?: string | null
           cached_at?: string | null
-          created_at?: string
+          genres?: string[] | null
           id?: string
-          overview?: string
+          overview?: string | null
           poster_url?: string | null
           release_date?: string | null
+          runtime_mins?: number | null
+          status?: string | null
           title: string
           tmdb_id: number
           type: string
@@ -181,11 +326,13 @@ export type Database = {
         Update: {
           backdrop_url?: string | null
           cached_at?: string | null
-          created_at?: string
+          genres?: string[] | null
           id?: string
-          overview?: string
+          overview?: string | null
           poster_url?: string | null
           release_date?: string | null
+          runtime_mins?: number | null
+          status?: string | null
           title?: string
           tmdb_id?: number
           type?: string
@@ -197,30 +344,30 @@ export type Database = {
           account_type: string
           avatar_url: string | null
           bio: string | null
-          created_at: string
+          created_at: string | null
           display_name: string | null
           id: string
-          region: string | null
+          region: string
           username: string
         }
         Insert: {
           account_type?: string
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           id: string
-          region?: string | null
+          region?: string
           username: string
         }
         Update: {
           account_type?: string
           avatar_url?: string | null
           bio?: string | null
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           id?: string
-          region?: string | null
+          region?: string
           username?: string
         }
         Relationships: []
