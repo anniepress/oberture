@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
+import { Route as PersonIdRouteImport } from './routes/person.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -52,6 +53,11 @@ const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonIdRoute = PersonIdRouteImport.update({
+  id: '/person/$id',
+  path: '/person/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/library': typeof LibraryRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/person/$id': typeof PersonIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/profile/': typeof ProfileIndexRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/library': typeof LibraryRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/person/$id': typeof PersonIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/profile': typeof ProfileIndexRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/library': typeof LibraryRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/person/$id': typeof PersonIdRoute
   '/profile/$username': typeof ProfileUsernameRoute
   '/profile/': typeof ProfileIndexRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/library'
     | '/sitemap.xml'
+    | '/person/$id'
     | '/profile/$username'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/library'
     | '/sitemap.xml'
+    | '/person/$id'
     | '/profile/$username'
     | '/profile'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/library'
     | '/sitemap.xml'
+    | '/person/$id'
     | '/profile/$username'
     | '/profile/'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   LibraryRoute: typeof LibraryRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  PersonIdRoute: typeof PersonIdRoute
   ProfileUsernameRoute: typeof ProfileUsernameRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/person/$id': {
+      id: '/person/$id'
+      path: '/person/$id'
+      fullPath: '/person/$id'
+      preLoaderRoute: typeof PersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   LibraryRoute: LibraryRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  PersonIdRoute: PersonIdRoute,
   ProfileUsernameRoute: ProfileUsernameRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
