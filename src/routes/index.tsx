@@ -13,9 +13,19 @@ export const Route = createFileRoute("/")({
       { title: "Oberture — Search films & TV" },
       {
         name: "description",
-        content: "Search for films and TV shows to track on Oberture.",
+        content:
+          "Search films and TV shows on Oberture and track what you've watched, what you're watching, and what's next.",
       },
+      { property: "og:title", content: "Oberture — Search films & TV" },
+      {
+        property: "og:description",
+        content:
+          "Search the TMDB catalogue and start tracking films and TV shows on Oberture.",
+      },
+      { property: "og:url", content: "https://oberture.lovable.app/" },
+      { property: "og:type", content: "website" },
     ],
+    links: [{ rel: "canonical", href: "https://oberture.lovable.app/" }],
   }),
   component: SearchPage,
 });
