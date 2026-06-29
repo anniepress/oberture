@@ -91,7 +91,7 @@ function SearchPage() {
         </div>
         <header className="flex flex-col items-center text-center">
           <h1 className="wordmark text-6xl sm:text-7xl leading-none">
-            Oberture
+            Oberture<span className="sr-only"> — Search and track films & TV</span>
           </h1>
           <p className="mt-3 text-xs uppercase tracking-[0.35em] text-muted-foreground">
             Films · Television · Catalogued
@@ -103,7 +103,10 @@ function SearchPage() {
           <SearchInput value={query} onChange={setQuery} />
         </div>
 
-        <section className="mt-14">
+        <section className="mt-14" aria-labelledby="search-results-heading">
+          <h2 id="search-results-heading" className="sr-only">
+            Search results
+          </h2>
           {loading && <LoadingGrid />}
           {!loading && results.length > 0 && (
             <ResultsGrid results={results} onSelect={setSelected} />
