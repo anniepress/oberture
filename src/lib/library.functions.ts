@@ -160,6 +160,7 @@ export const setRating = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<{ rating: number | null }> => {
     const { supabase, userId } = context;
+    const nowIso = new Date().toISOString();
 
     const { data: title, error: tErr } = await supabase
       .from("titles")
@@ -169,13 +170,29 @@ export const setRating = createServerFn({ method: "POST" })
     if (tErr) throw new Error(tErr.message);
     if (!title) throw new Error("Add to library before rating");
 
-    const { data: entryRow, error } = await supabase
+    const { data: existing, error: existingErr } = await supabase
       .from("entries")
-      .update({ rating: data.rating, updated_at: new Date().toISOString() })
+      .select("id, status")
       .eq("user_id", userId)
       .eq("title_id", title.id)
-      .select("id")
       .maybeSingle();
+    if (existingErr) throw new Error(existingErr.message);
+    if (!existing) throw new Error("Add to library before rating");
+
+    const { data: entryRow, error } = await supabase
+      .from("entries")
+      .upsert(
+        {
+          user_id: userId,
+          title_id: title.id,
+          status: existing.status,
+          rating: data.rating,
+          updated_at: nowIso,
+        },
+        { onConflict: "user_id,title_id" },
+      )
+      .select("id")
+      .single();
 
     if (error) throw new Error(error.message);
 
@@ -184,7 +201,7 @@ export const setRating = createServerFn({ method: "POST" })
         actorId: userId,
         activityType: "rated",
         titleId: title.id,
-        entryId: entryRow?.id ?? null,
+        entryId: entryRow.id,
         metadata: { rating: data.rating },
       });
     }
@@ -229,17 +246,18 @@ export const upsertEntry = createServerFn({ method: "POST" })
       throw new Error(titleErr?.message ?? "Failed to save title");
     }
 
-    const { data: existing } = await supabase
+    const { data: existing, error: existingErr } = await supabase
       .from("entries")
       .select("id, status, watched_at")
       .eq("user_id", userId)
       .eq("title_id", titleRow.id)
       .maybeSingle();
+    if (existingErr) throw new Error(existingErr.message);
 
     const shouldStampWatched =
       status === "watched" && (!existing || existing.status !== "watched");
 
-    const { data: upserted, error: entryErr } = await supabase
+    const { data: entryRow, error: entryErr } = await supabase
       .from("entries")
       .upsert(
         {
@@ -252,10 +270,10 @@ export const upsertEntry = createServerFn({ method: "POST" })
         { onConflict: "user_id,title_id" },
       )
       .select("id")
-      .maybeSingle();
+      .single();
 
     if (entryErr) throw new Error(entryErr.message);
-    const entryId = upserted?.id ?? existing?.id ?? null;
+    const entryId = entryRow.id;
 
     const statusChanged = !existing || existing.status !== status;
     if (statusChanged) {
