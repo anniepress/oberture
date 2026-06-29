@@ -17,9 +17,39 @@ import type { EntryStatus } from "@/lib/library.functions";
 import type { TmdbResult } from "@/lib/tmdb.functions";
 
 export const Route = createFileRoute("/profile/$username")({
-  head: ({ params }) => ({
-    meta: [{ title: `@${params.username} — Oberture` }],
-  }),
+  head: ({ params }) => {
+    const url = `https://oberture.lovable.app/profile/${params.username}`;
+    const title = `@${params.username} — Oberture`;
+    const description = `See @${params.username}'s film and TV history on Oberture — watched titles, ratings, watchlist, and recent activity.`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "profile" },
+        { property: "profile:username", content: params.username },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            url,
+            mainEntity: {
+              "@type": "Person",
+              name: params.username,
+              alternateName: `@${params.username}`,
+              url,
+            },
+          }),
+        },
+      ],
+    };
+  },
   component: ProfilePage,
 });
 
