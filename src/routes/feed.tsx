@@ -11,7 +11,26 @@ import { searchUsers, type UserSearchResult } from "@/lib/profile.functions";
 import type { TmdbResult } from "@/lib/tmdb.functions";
 
 export const Route = createFileRoute("/feed")({
-  head: () => ({ meta: [{ title: "Oberture — Feed" }] }),
+  head: () => ({
+    meta: [
+      { title: "Oberture — Feed" },
+      {
+        name: "description",
+        content:
+          "Your Oberture activity stream — see what people you follow are watching, rating, and adding to their watchlists.",
+      },
+      { property: "og:title", content: "Oberture — Feed" },
+      {
+        property: "og:description",
+        content:
+          "Activity from the viewers you follow on Oberture, plus a search for finding new people to follow.",
+      },
+      { property: "og:url", content: "https://oberture.lovable.app/feed" },
+      { property: "og:type", content: "website" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://oberture.lovable.app/feed" }],
+  }),
   component: FeedPage,
 });
 
@@ -72,7 +91,10 @@ function FeedPage() {
               <UserSearch />
             </div>
 
-            <section className="mt-10 space-y-4">
+            <section className="mt-10 space-y-4" aria-labelledby="feed-heading">
+              <h2 id="feed-heading" className="sr-only">
+                Activity feed
+              </h2>
               {isLoading && (
                 <p className="text-center text-sm text-muted-foreground">
                   Loading…
