@@ -17,9 +17,39 @@ import type { EntryStatus } from "@/lib/library.functions";
 import type { TmdbResult } from "@/lib/tmdb.functions";
 
 export const Route = createFileRoute("/profile/$username")({
-  head: ({ params }) => ({
-    meta: [{ title: `@${params.username} — Oberture` }],
-  }),
+  head: ({ params }) => {
+    const url = `https://oberture.lovable.app/profile/${params.username}`;
+    const title = `@${params.username} — Oberture`;
+    const description = `See @${params.username}'s film and TV history on Oberture — watched titles, ratings, watchlist, and recent activity.`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "profile" },
+        { property: "profile:username", content: params.username },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            url,
+            mainEntity: {
+              "@type": "Person",
+              name: params.username,
+              alternateName: `@${params.username}`,
+              url,
+            },
+          }),
+        },
+      ],
+    };
+  },
   component: ProfilePage,
 });
 
@@ -275,7 +305,10 @@ function ProfilePage() {
               })}
             </div>
 
-            <section className="mt-10">
+            <section className="mt-10" aria-labelledby="profile-entries-heading">
+              <h2 id="profile-entries-heading" className="sr-only">
+                @{profile.username}'s entries
+              </h2>
               {!profile.canViewEntries ? (
                 <div className="mx-auto max-w-md py-12 text-center">
                   <p className="font-mono text-lg">Entries are private</p>
@@ -312,7 +345,7 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
   return url ? (
     <img
       src={url}
-      alt={name}
+      alt={`${name} avatar`}
       className="h-24 w-24 rounded-sm object-cover sm:h-28 sm:w-28"
       style={{
         boxShadow:
@@ -485,7 +518,7 @@ function EntryGrid({
             {e.title.posterUrl ? (
               <img
                 src={e.title.posterUrl}
-                alt={e.title.title}
+                alt={`${e.title.title} poster`}
                 loading="lazy"
                 className="h-full w-full object-cover"
               />

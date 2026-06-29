@@ -13,9 +13,19 @@ export const Route = createFileRoute("/")({
       { title: "Oberture — Search films & TV" },
       {
         name: "description",
-        content: "Search for films and TV shows to track on Oberture.",
+        content:
+          "Search films and TV shows on Oberture and track what you've watched, what you're watching, and what's next.",
       },
+      { property: "og:title", content: "Oberture — Search films & TV" },
+      {
+        property: "og:description",
+        content:
+          "Search the TMDB catalogue and start tracking films and TV shows on Oberture.",
+      },
+      { property: "og:url", content: "https://oberture.lovable.app/" },
+      { property: "og:type", content: "website" },
     ],
+    links: [{ rel: "canonical", href: "https://oberture.lovable.app/" }],
   }),
   component: SearchPage,
 });
@@ -81,7 +91,7 @@ function SearchPage() {
         </div>
         <header className="flex flex-col items-center text-center">
           <h1 className="wordmark text-6xl sm:text-7xl leading-none">
-            Oberture
+            Oberture<span className="sr-only"> — Search and track films & TV</span>
           </h1>
           <p className="mt-3 text-xs uppercase tracking-[0.35em] text-muted-foreground">
             Films · Television · Catalogued
@@ -93,7 +103,10 @@ function SearchPage() {
           <SearchInput value={query} onChange={setQuery} />
         </div>
 
-        <section className="mt-14">
+        <section className="mt-14" aria-labelledby="search-results-heading">
+          <h2 id="search-results-heading" className="sr-only">
+            Search results
+          </h2>
           {loading && <LoadingGrid />}
           {!loading && results.length > 0 && (
             <ResultsGrid results={results} onSelect={setSelected} />
@@ -211,7 +224,7 @@ function PosterCard({
         {item.posterUrl ? (
           <img
             src={item.posterUrl}
-            alt={item.title}
+            alt={`${item.title} poster`}
             loading="lazy"
             className="h-full w-full object-cover"
           />

@@ -100,7 +100,7 @@ function Body({ item }: { item: TmdbResult }) {
             {item.posterUrl ? (
               <img
                 src={item.posterUrl}
-                alt={item.title}
+                alt={`${item.title} poster`}
                 className="h-full w-full object-cover"
               />
             ) : (

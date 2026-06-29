@@ -15,8 +15,22 @@ export const Route = createFileRoute("/library")({
   head: () => ({
     meta: [
       { title: "Oberture — Library" },
-      { name: "description", content: "Your tracked films and TV shows." },
+      {
+        name: "description",
+        content:
+          "Your personal Oberture library of films and TV shows you've watched, are watching, and want to watch next.",
+      },
+      { property: "og:title", content: "Oberture — Library" },
+      {
+        property: "og:description",
+        content:
+          "Browse the films and TV shows you've logged on Oberture, filtered by watched, watching, and watchlist.",
+      },
+      { property: "og:url", content: "https://oberture.lovable.app/library" },
+      { property: "og:type", content: "website" },
+      { name: "robots", content: "noindex" },
     ],
+    links: [{ rel: "canonical", href: "https://oberture.lovable.app/library" }],
   }),
   component: LibraryPage,
 });
@@ -129,7 +143,10 @@ function LibraryPage() {
               })}
             </div>
 
-            <section className="mt-12">
+            <section className="mt-12" aria-labelledby="library-grid-heading">
+              <h2 id="library-grid-heading" className="sr-only">
+                Library entries
+              </h2>
               {isLoading && <SkeletonGrid />}
               {error && (
                 <p className="mt-6 text-center text-sm text-[color:var(--cyber-magenta)]">
@@ -167,7 +184,7 @@ function LibraryCard({ entry }: { entry: LibraryEntry }) {
         {t.posterUrl ? (
           <img
             src={t.posterUrl}
-            alt={t.title}
+            alt={`${t.title} poster`}
             loading="lazy"
             className="h-full w-full object-cover"
           />

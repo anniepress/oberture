@@ -1,0 +1,8 @@
+# Oberture
+
+> Oberture is a personal film and TV tracking app with a Y2K cyber aesthetic. Search the TMDB catalogue, log what you've watched, rate titles, follow other viewers, and see where to stream.
+
+## Pages
+
+- [Search](/): Find films and TV shows from the TMDB catalogue and open detail panels with streaming, rent, and buy options.
+- [Sign in](/auth): Create an account or sign in with email and password or Google to start tracking titles.

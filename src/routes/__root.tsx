@@ -80,7 +80,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Oberture — Track films & TV" },
       { name: "description", content: "A personal film and TV tracking app." },
       { name: "author", content: "Oberture" },
-      { property: "og:title", content: "Oberture" },
+      { property: "og:site_name", content: "Oberture" },
+      { property: "og:title", content: "Oberture — Track Films & TV" },
       { property: "og:description", content: "A personal film and TV tracking app." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -92,6 +93,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=VT323&family=Major+Mono+Display&family=Space+Mono:wght@400;700&family=Chakra+Petch:wght@400;500;600;700&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Oberture",
+              url: "https://oberture.lovable.app",
+            },
+            {
+              "@type": "WebSite",
+              name: "Oberture",
+              url: "https://oberture.lovable.app",
+            },
+          ],
+        }),
       },
     ],
   }),
