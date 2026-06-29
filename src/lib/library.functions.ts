@@ -207,8 +207,7 @@ export const upsertEntry = createServerFn({ method: "POST" })
 
     const nowIso = new Date().toISOString();
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: titleRow, error: titleErr } = await supabaseAdmin
+    const { data: titleRow, error: titleErr } = await supabase
       .from("titles")
       .upsert(
         {
