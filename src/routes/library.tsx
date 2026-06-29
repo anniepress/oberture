@@ -184,7 +184,7 @@ function LibraryCard({ entry }: { entry: LibraryEntry }) {
         {t.posterUrl ? (
           <img
             src={t.posterUrl}
-            alt={t.title}
+            alt={`${t.title} poster`}
             loading="lazy"
             className="h-full w-full object-cover"
           />

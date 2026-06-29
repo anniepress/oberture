@@ -345,7 +345,7 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
   return url ? (
     <img
       src={url}
-      alt={name}
+      alt={`${name} avatar`}
       className="h-24 w-24 rounded-sm object-cover sm:h-28 sm:w-28"
       style={{
         boxShadow:
@@ -518,7 +518,7 @@ function EntryGrid({
             {e.title.posterUrl ? (
               <img
                 src={e.title.posterUrl}
-                alt={e.title.title}
+                alt={`${e.title.title} poster`}
                 loading="lazy"
                 className="h-full w-full object-cover"
               />
