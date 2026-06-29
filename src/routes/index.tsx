@@ -224,7 +224,7 @@ function PosterCard({
         {item.posterUrl ? (
           <img
             src={item.posterUrl}
-            alt={item.title}
+            alt={`${item.title} poster`}
             loading="lazy"
             className="h-full w-full object-cover"
           />
