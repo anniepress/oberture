@@ -305,7 +305,10 @@ function ProfilePage() {
               })}
             </div>
 
-            <section className="mt-10">
+            <section className="mt-10" aria-labelledby="profile-entries-heading">
+              <h2 id="profile-entries-heading" className="sr-only">
+                @{profile.username}'s entries
+              </h2>
               {!profile.canViewEntries ? (
                 <div className="mx-auto max-w-md py-12 text-center">
                   <p className="font-mono text-lg">Entries are private</p>
