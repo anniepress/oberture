@@ -53,8 +53,9 @@ export const Route = createFileRoute("/profile/$username")({
   component: ProfilePage,
 });
 
-type Tab = EntryStatus;
+type Tab = "all" | EntryStatus;
 const TABS: { value: Tab; label: string }[] = [
+  { value: "all", label: "All" },
   { value: "watched", label: "Watched" },
   { value: "watching", label: "Watching" },
   { value: "want_to_watch", label: "Want to Watch" },
@@ -70,7 +71,7 @@ function ProfilePage() {
 
   const [authReady, setAuthReady] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [tab, setTab] = useState<Tab>("watched");
+  const [tab, setTab] = useState<Tab>("watching");
   const [selected, setSelected] = useState<TmdbResult | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -115,7 +116,7 @@ function ProfilePage() {
   });
 
   const filteredEntries = useMemo(
-    () => (entries ?? []).filter((e) => e.status === tab),
+    () => (tab === "all" ? entries ?? [] : (entries ?? []).filter((e) => e.status === tab)),
     [entries, tab],
   );
 
@@ -279,9 +280,10 @@ function ProfilePage() {
             <div className="mx-auto mt-8 flex w-full max-w-3xl flex-wrap items-center justify-center gap-2">
               {TABS.map((t) => {
                 const active = tab === t.value;
-                const count = (entries ?? []).filter(
-                  (e) => e.status === t.value,
-                ).length;
+                const count =
+                  t.value === "all"
+                    ? (entries ?? []).length
+                    : (entries ?? []).filter((e) => e.status === t.value).length;
                 return (
                   <button
                     key={t.value}
